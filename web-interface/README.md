@@ -27,3 +27,9 @@ Steps:
 
 5. Start the gRPC client.s
    npx ts-node client.ts
+
+6. Generate descriptor_set.bin.
+   npx grpc_tools_node_protoc --descriptor_set_out=descriptor_set.bin --include_imports ./proto/\*.proto
+
+7. Send gRPC request using grpcurl.
+   grpcurl -plaintext -d '{"message": "Hello from gRPC!"}' localhost:50051 pingpong.PingPong/Ping
