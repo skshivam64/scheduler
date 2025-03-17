@@ -1,34 +1,39 @@
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import path from "path";
+import dotenv from "dotenv";
 import { addReflection } from "grpc-server-reflection";
 
-// Load the protobuf file
-const PROTO_PATH = path.join(__dirname, "proto/pingpong.proto");
-const packageDefinition = protoLoader.loadSync(PROTO_PATH);
-const pingpongProto: any =
-    grpc.loadPackageDefinition(packageDefinition).pingpong;
+import PingpongService from "./services/pingpong";
+import CommandService from "./services/command";
 
-// Implement the PingPong service
+dotenv.config();
+
+const PINGPONG_PROTO_PATH = path.join(__dirname, "proto/pingpong.proto");
+const COMMAND_PROTO_PATH = path.join(__dirname, "proto/command.proto");
+
+const pingpongPkgDef = protoLoader.loadSync(PINGPONG_PROTO_PATH);
+const commandPkgDef = protoLoader.loadSync(COMMAND_PROTO_PATH);
+
+const pingpongProto: any = grpc.loadPackageDefinition(pingpongPkgDef).pingpong;
+const commandProto: any = grpc.loadPackageDefinition(commandPkgDef).command;
+
 const server = new grpc.Server();
 
 // Enable reflection
 addReflection(server, "./descriptor_set.bin");
 
-server.addService(pingpongProto.PingPong.service, {
-    Ping: (call: any, callback: any) => {
-        console.log("Received:", call.request.message);
-        callback(null, { message: call.request.message });
-    },
-});
+server.addService(pingpongProto.PingPong.service, PingpongService);
+server.addService(commandProto.Command.service, CommandService);
 
 // Start the gRPC server
-const PORT = "50051";
 server.bindAsync(
-    `0.0.0.0:${PORT}`,
+    `${process.env.SERVER_HOST}:${process.env.SERVER_PORT}`,
     grpc.ServerCredentials.createInsecure(),
     () => {
-        console.log(`🚀 gRPC Server running on port ${PORT}`);
+        console.log(
+            `🚀 gRPC Server running on port ${process.env.SERVER_PORT}`
+        );
         server.start();
     }
 );

@@ -6,6 +6,6 @@
         "user": "postgres",
         "password": "password",
         "database": "scheduler_db",
-        "port": 5432
+        "port": 5431
     }
 }

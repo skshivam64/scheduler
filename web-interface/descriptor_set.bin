@@ -1,6 +1,35 @@
 
 ¾
-proto/pingpong.protopingpong"'
+google/protobuf/empty.protogoogle.protobuf"
+EmptyB}
+com.google.protobufB
+EmptyProtoPZ.google.golang.org/protobuf/types/known/emptypbø¢GPBªGoogle.Protobuf.WellKnownTypesbproto3
+Ÿ
+command.protocommandgoogle/protobuf/empty.proto"B
+CreateCommandRequest
+name (	Rname
+script (	Rscript"'
+GetCommandRequest
+name (	Rname"@
+GetCommandResponse
+name (	Rname
+script (	Rscript"B
+UpdateCommandRequest
+name (	Rname
+script (	Rscript"*
+DeleteCommandRequest
+name (	Rname"O
+ListCommandsResponse7
+commands (2.command.GetCommandResponseRcommands2ï
+CommandF
+CreateCommand.command.CreateCommandRequest.google.protobuf.EmptyE
+
+GetCommand.command.GetCommandRequest.command.GetCommandResponseF
+UpdateCommand.command.UpdateCommandRequest.google.protobuf.EmptyF
+DeleteCommand.command.DeleteCommandRequest.google.protobuf.EmptyE
+ListCommands.google.protobuf.Empty.command.ListCommandsResponsebproto3
+¸
+pingpong.protopingpong"'
 PingRequest
 message (	Rmessage"(
 PingResponse

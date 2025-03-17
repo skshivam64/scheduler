@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
     ctrl-plane:
         image: node:latest
@@ -9,19 +7,26 @@ services:
             - ./:/app
         ports:
             - "50051:50051"
+        networks:
+            - app_network
         command: ["npx", "ts-node", "/app/server.ts"]
         depends_on:
-            - db
+            - database
         environment:
             - NODE_ENV=production
         stdin_open: true
         tty: true
 
-    db:
+    database:
         image: postgres:latest
-        container_name: postgres
+        container_name: database
         restart: always
         environment:
-            POSTGRES_PASSWORD: password
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
         ports:
-            - "5432:5432"
+            - "5431:5432"
+        networks:
+            - app_network
+
+networks:
+    app_network:

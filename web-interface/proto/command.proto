@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package command;
+
+import "google/protobuf/empty.proto";
+
+service Command {
+    rpc CreateCommand (CreateCommandRequest) returns (google.protobuf.Empty);
+    rpc GetCommand (GetCommandRequest) returns (GetCommandResponse);
+    rpc UpdateCommand (UpdateCommandRequest) returns (google.protobuf.Empty);
+    rpc DeleteCommand (DeleteCommandRequest) returns (google.protobuf.Empty);
+    rpc ListCommands (google.protobuf.Empty) returns (ListCommandsResponse);
+}
+
+message CreateCommandRequest {
+    string name = 1;
+    string script = 2;
+}
+
+message GetCommandRequest {
+    string name = 1;
+}
+
+message GetCommandResponse {
+    string name = 1;
+    string script = 2;
+}
+
+message UpdateCommandRequest {
+    string name = 1;
+    string script = 2;
+}
+
+message DeleteCommandRequest {
+    string name = 1;
+}
+
+message ListCommandsResponse {
+    repeated GetCommandResponse commands = 1;
+}
