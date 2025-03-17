@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+    ctrl-plane:
+        image: node:latest
+        container_name: ctrl-plane
+        working_dir: /app
+        volumes:
+            - ./:/app
+        ports:
+            - "50051:50051"
+        command: ["npx", "ts-node", "/app/server.ts"]
+        depends_on:
+            - db
+        environment:
+            - NODE_ENV=production
+        stdin_open: true
+        tty: true
+
+    db:
+        image: postgres:latest
+        container_name: postgres
+        restart: always
+        environment:
+            POSTGRES_PASSWORD: password
+        ports:
+            - "5432:5432"

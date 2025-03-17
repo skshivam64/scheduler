@@ -3,11 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
-    "scripts": {
-        "server": "npx ts-node server",
-        "client": "npx ts-node client",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
+    "scripts": {},
     "keywords": [],
     "author": "",
     "license": "ISC",
