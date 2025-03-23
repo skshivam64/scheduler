@@ -71,10 +71,22 @@ const JobService = {
         }
 
         try {
-            const jobResult = await pool.query(
-                "SELECT * FROM jobs WHERE id = $1",
-                [id]
-            );
+            const query = `
+                SELECT
+                j.id AS job_id, j.status, j.error, j.result, j.scheduled_for,
+                j.started_at, j.finished_at, j.created_at,
+                s.id AS schedule_id, s.command_name, c.script AS command_script,
+                ARRAY_REMOVE(ARRAY_AGG(p.value), NULL) AS command_script_params
+                FROM jobs j
+                JOIN schedules s ON j.schedule_id = s.id
+                JOIN commands c ON s.command_name = c.name
+                LEFT JOIN params p ON s.id = p.schedule_id
+                WHERE j.id = $1
+                GROUP BY j.id, s.id, c.script;
+            `;
+
+            const jobResult = await pool.query(query, [id]);
+
             if (jobResult.rowCount === 0) {
                 return callback({
                     code: grpc.status.NOT_FOUND,
@@ -82,9 +94,32 @@ const JobService = {
                 });
             }
 
-            callback(null, jobResult.rows[0]);
-        } catch (err) {
-            callback(err);
+            const job = jobResult.rows[0];
+
+            // Construct response
+            const response = {
+                id: job.job_id,
+                scheduleId: job.schedule_id,
+                payload: {
+                    commandName: job.command_name,
+                    commandScript: job.command_script,
+                    commandScriptParams: job.command_script_params || [],
+                },
+                status: job.status,
+                error: job.error || "",
+                result: job.result || "",
+                scheduledFor: job.scheduled_for || "",
+                startedAt: job.started_at || "",
+                finishedAt: job.finished_at || "",
+                createdAt: job.created_at,
+            };
+
+            callback(null, response);
+        } catch (err: any) {
+            callback({
+                code: grpc.status.INTERNAL,
+                message: err.message,
+            });
         }
     },
 

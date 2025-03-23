@@ -14,16 +14,23 @@ message CreateJobRequest {
   string scheduled_for = 2;
 }
 
+message Payload {
+  string command_name = 1;
+  string command_script = 2;
+  repeated string command_script_params = 3;
+}
+
 message JobResponse {
   int64 id = 1;
   int64 schedule_id = 2;
-  string status = 3;
-  string error = 4;
-  string result = 5;
-  string scheduled_for = 6;
-  string started_at = 7;
-  string finished_at = 8;
-  string created_at = 9;
+  Payload payload = 3;
+  string status = 4;
+  string error = 5;
+  string result = 6;
+  string scheduled_for = 7;
+  string started_at = 8;
+  string finished_at = 9;
+  string created_at = 10;
 }
 
 message GetJobRequest {
