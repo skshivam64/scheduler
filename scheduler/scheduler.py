@@ -55,42 +55,54 @@ def set_last_job_timestamp_for_schedule(schedule_id, timestamp):
 
 def get_next_runs(cron_expr, count, start_time=None):
     if start_time is None:
-        start_time = datetime.now()
+        start_time = datetime.utcnow()
 
     cron = croniter(cron_expr, start_time)
     return [cron.get_next(datetime) for _ in range(count)]
 
 
 def schedule_jobs():
-    logging.info("Scheduling jobs...")
+    logging.debug("Scheduling jobs...")
     schedules = schedule_client.ListSchedules(Empty()).schedules
     for schedule in schedules:
         lock_key = f"schedule_lock:{schedule.id}"
-        logging.info(f"Processing schedule {schedule.id}...")
+        logging.debug(f"Processing schedule {schedule.id}...")
         if acquire_lock(lock_key):
             try:
                 queuedJobs = job_client.ListJobs(ListJobsRequest(
                     schedule_id=schedule.id, status="QUEUED")).jobs
-            except Exception as e:
-                logging.error(f"An error occurred: {e}")
-            finally:
                 last_timestamp = get_last_job_timestamp_for_schedule(
-                    schedule.id)
+                    schedule.id).decode("utf-8")
 
                 # If two jobs are already queued, skip
                 if len(queuedJobs) < MAX_QUEUE_SIZE:
+                    logging.info(f"Last timestamp: {last_timestamp}")
                     next_runs = get_next_runs(
-                        schedule.crontab, (MAX_QUEUE_SIZE - len(queuedJobs)), last_timestamp)
-                    logging.info(f"Next runs: {next_runs}")
+                        schedule.crontab,
+                        (MAX_QUEUE_SIZE - len(queuedJobs)),
+                        datetime.strptime(last_timestamp, "%Y-%m-%d %H:%M:%S"))
+                    logging.debug(f"Next runs: {next_runs}")
 
-                    # TODO: Queue the next runs
+                    for run in next_runs:
+                        job = job_client.CreateJob(CreateJobRequest(
+                            schedule_id=schedule.id, scheduled_for=run.strftime('%Y-%m-%d %H:%M:%S')))
+                        process_job.apply_async(
+                            args=[job.id], eta=run.strftime('%Y-%m-%d %H:%M:%S'))
+                        set_last_job_timestamp_for_schedule(
+                            schedule.id, run.strftime('%Y-%m-%d %H:%M:%S'))
+                        logging.info(
+                            f"Scheduled job {job.id} for {run.strftime('%Y-%m-%d %H:%M:%S')}")
+
+            except Exception as e:
+                logging.error(f"An error occurred: {e}")
+            finally:
                 release_lock(lock_key)
-        logging.info(f"Processed schedule {schedule.id}...")
+        logging.debug(f"Processed schedule {schedule.id}...")
 
 
 @app.task()
 def process_job(job_id):
-    logging.info(f"Processing job {job_id}...")
+    logging.debug(f"Processing job {job_id}...")
     job = job_client.GetJob(GetJobRequest(id=job_id))
     lock_key = f"job_lock:{job.id}"
     if acquire_lock(lock_key, expiry=3600):  # Ensure no duplicate execution
