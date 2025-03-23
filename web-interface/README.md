@@ -49,7 +49,30 @@ Other util commands:
 7. Example command to list all commands.
    grpcurl -plaintext localhost:50051 command.Command/ListCommands
 
+8. Create a schedule.
+   grpcurl -plaintext -d '{"command_name": "sum-two", "crontab": "0 0 \* \* \*", "params": ["3", "5"]}' localhost:50051 schedule.Schedule/CreateSchedule
+
+9. List all schedules.
+   grpcurl -plaintext localhost:50051 schedule.Schedule/ListSchedules
+
+10. Delete a schedule.
+    grpcurl -plaintext -d '{"id": 1}' localhost:50051 schedule.Schedule/DeleteSchedule
+
 TODOs:
 
-6. Data validation for each service.
-7. Pagination for the list APIs.
+1. Data validation for each service.
+2. Pagination for the list APIs.
+3. Unit tests.
+4. API Gateway using Envoy or any other proxy to expose REST APIs.
+
+Although, the service supports updating and removing command
+but please note the following:
+
+i) If the command is updated, jobs that are already scheduled
+to start or are already running, won't be affected; they will
+run the old command. Any new job will be scheduled with the
+updated command.
+
+ii) If the command is deleted, jobs that are already scheduled
+to start or are running alreadt, won't be affected but any new
+job will not be scheduled with the command.

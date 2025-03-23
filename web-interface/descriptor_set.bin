@@ -36,3 +36,22 @@ GetCommand.command.GetCommandRequest.command.GetCommandResponseF
 message (	Rmessage2A
 PingPong5
 Ping.pingpong.PingRequest.pingpong.PingResponsebproto3
+è
+schedule.protoschedulegoogle/protobuf/empty.proto"l
+CreateScheduleRequest!
+command_name (	RcommandName
+crontab (	Rcrontab
+params (	Rparams"'
+DeleteScheduleRequest
+id (Rid"w
+ScheduleResponse
+id (Rid!
+command_name (	RcommandName
+crontab (	Rcrontab
+params (	Rparams"Q
+ListSchedulesResponse8
+	schedules (2.schedule.ScheduleResponseR	schedules2Í
+ScheduleI
+CreateSchedule.schedule.CreateScheduleRequest.google.protobuf.EmptyI
+DeleteSchedule.schedule.DeleteScheduleRequest.google.protobuf.EmptyH
+ListSchedules.google.protobuf.Empty.schedule.ListSchedulesResponsebproto3
