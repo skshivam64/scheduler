@@ -1,19 +1,56 @@
 import * as grpc from "@grpc/grpc-js";
-import pool from "../db";
 import { Empty } from "google-protobuf/google/protobuf/empty_pb";
+import CommandRepository from "../repositories/command";
+import Joi from "joi";
 
-import dotenv from "dotenv";
+const commandSchema = Joi.object({
+    name: Joi.string().min(1).max(255).required().messages({
+        "string.base": "name must be a string",
+        "string.empty": "name cannot be empty",
+        "string.min": "name should have at least 1 character",
+        "string.max": "name cannot exceed 255 characters",
+        "any.required": "name is required",
+    }),
+    script: Joi.string().min(1).required().messages({
+        "string.base": "script must be a string",
+        "string.empty": "script cannot be empty",
+        "string.min": "script should have at least 1 character",
+        "any.required": "script is required",
+    }),
+});
 
-dotenv.config({ path: "../.env" });
+const nameSchema = Joi.object({
+    name: Joi.string().min(1).max(255).required().messages({
+        "string.base": "name must be a string",
+        "string.empty": "name cannot be empty",
+        "string.min": "name should have at least 1 character",
+        "string.max": "name cannot exceed 255 characters",
+        "any.required": "name is required",
+    }),
+});
 
 const CommandService = {
     CreateCommand: async (call: any, callback: any) => {
+        const { error } = commandSchema.validate(call.request);
+        if (error) {
+            return callback({
+                code: grpc.status.INVALID_ARGUMENT,
+                message: error.details[0].message,
+            });
+        }
+
         const { name, script } = call.request;
         try {
-            await pool.query(
-                "INSERT INTO commands (name, script) VALUES ($1, $2)",
-                [name, script]
-            );
+            // Check if the command already exists
+            const exists = await CommandRepository.commandExists(name);
+            if (exists) {
+                return callback({
+                    code: grpc.status.ALREADY_EXISTS,
+                    message: "Command already exists!",
+                });
+            }
+
+            await CommandRepository.createCommand(name, script);
             callback(null, new Empty());
         } catch (err) {
             callback(err);
@@ -21,32 +58,47 @@ const CommandService = {
     },
 
     GetCommand: async (call: any, callback: any) => {
+        const { error } = nameSchema.validate(call.request);
+        if (error) {
+            return callback({
+                code: grpc.status.INVALID_ARGUMENT,
+                message: error.details[0].message,
+            });
+        }
+
         const { name } = call.request;
         try {
-            const result = await pool.query(
-                "SELECT name, script FROM commands WHERE name = $1 AND is_deleted = false",
-                [name]
-            );
-            if (result.rows.length > 0) {
-                callback(null, result.rows[0]);
-            } else {
-                callback({
+            const command = await CommandRepository.getCommandByName(name);
+            if (!command) {
+                return callback({
                     code: grpc.status.NOT_FOUND,
-                    message: "Command not found",
+                    message: "Command doesn't exist!",
                 });
             }
+            callback(null, command);
         } catch (err) {
             callback(err);
         }
     },
 
     UpdateCommand: async (call: any, callback: any) => {
+        const { error } = commandSchema.validate(call.request);
+        if (error) {
+            return callback({
+                code: grpc.status.INVALID_ARGUMENT,
+                message: error.details[0].message,
+            });
+        }
+
         const { name, script } = call.request;
         try {
-            await pool.query(
-                "UPDATE commands SET script = $1 WHERE name = $2 AND is_deleted = false",
-                [script, name]
-            );
+            const updated = await CommandRepository.updateCommand(name, script);
+            if (!updated) {
+                return callback({
+                    code: grpc.status.NOT_FOUND,
+                    message: "Command doesn't exist!",
+                });
+            }
             callback(null, new Empty());
         } catch (err) {
             callback(err);
@@ -54,12 +106,23 @@ const CommandService = {
     },
 
     DeleteCommand: async (call: any, callback: any) => {
+        const { error } = nameSchema.validate(call.request);
+        if (error) {
+            return callback({
+                code: grpc.status.INVALID_ARGUMENT,
+                message: error.details[0].message,
+            });
+        }
+
         const { name } = call.request;
         try {
-            await pool.query(
-                "UPDATE commands SET is_deleted = true WHERE name = $1",
-                [name]
-            );
+            const deleted = await CommandRepository.deleteCommand(name);
+            if (!deleted) {
+                return callback({
+                    code: grpc.status.NOT_FOUND,
+                    message: "Command doesn't exist!",
+                });
+            }
             callback(null, new Empty());
         } catch (err) {
             callback(err);
@@ -68,10 +131,8 @@ const CommandService = {
 
     ListCommands: async (call: any, callback: any) => {
         try {
-            const result = await pool.query(
-                "SELECT name, script FROM commands WHERE is_deleted = false"
-            );
-            callback(null, { commands: result.rows });
+            const commands = await CommandRepository.listCommands();
+            callback(null, { commands });
         } catch (err) {
             callback(err);
         }
