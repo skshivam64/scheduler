@@ -1,0 +1,73 @@
+services:
+    ctrl-plane:
+        image: node:latest
+        container_name: ctrl-plane
+        working_dir: /app
+        volumes:
+            - ./ctrl-plane:/app
+        ports:
+            - "50051:50051"
+        networks:
+            - app_network
+        command: ["npx", "ts-node", "/app/server.ts"]
+        depends_on:
+            - database
+        environment:
+            - NODE_ENV=production
+        stdin_open: true
+        tty: true
+
+    database:
+        image: postgres:latest
+        container_name: database
+        restart: always
+        environment:
+            POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+        ports:
+            - "5431:5432"
+        networks:
+            - app_network
+
+    broker:
+        image: redis:latest
+        container_name: broker
+        restart: always
+        networks:
+            - app_network
+
+    scheduler:
+        build:
+            context: scheduler
+            dockerfile: Dockerfile
+        restart: always
+        volumes:
+            - ./scheduler:/app
+        environment:
+            REDIS_URL: ${REDIS_URL}
+        depends_on:
+            - broker
+        networks:
+            - app_network
+        command: ["python", "scheduler.py"]
+        deploy:
+            replicas: 2
+
+    worker:
+        build:
+            context: scheduler
+            dockerfile: Dockerfile
+        restart: always
+        volumes:
+            - ./scheduler:/app
+        environment:
+            REDIS_URL: ${REDIS_URL}
+        depends_on:
+            - broker
+        networks:
+            - app_network
+        command: "celery -A scheduler worker --loglevel=info 2>&1 | tee logs/worker.log"
+        deploy:
+            replicas: 5
+
+networks:
+    app_network:

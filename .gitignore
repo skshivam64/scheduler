@@ -1,3 +1,6 @@
 ctrl-plane/node_modules
 .env
 scheduler/scheduler-env
+scheduler/logs
+scheduler/__pycache__/
+scheduler/proto/__pycache__/
