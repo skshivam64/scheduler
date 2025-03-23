@@ -1,0 +1,6 @@
+grpcio==1.64.0
+grpcio-tools==1.64.0
+celery==5.3.6
+redis==5.0.3
+protobuf==5.26.1
+python-dotenv==1.0.1

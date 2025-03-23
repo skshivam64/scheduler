@@ -1,2 +1,3 @@
 web-interface/node_modules
 .env
+scheduler/scheduler-env

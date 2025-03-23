@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package schedule;
+
+import "google/protobuf/empty.proto";
+
+service Schedule {
+    rpc ListSchedules (google.protobuf.Empty) returns (ListSchedulesResponse);
+}
+
+message ScheduleResponse {
+    int64 id = 1;
+    string command_name = 2;
+    string crontab = 3;
+    repeated string params = 4;
+}
+
+message ListSchedulesResponse {
+    repeated ScheduleResponse schedules = 1;
+}

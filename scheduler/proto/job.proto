@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package job;
+
+service Job {
+  rpc CreateJob(CreateJobRequest) returns (JobResponse);
+  rpc GetJob(GetJobRequest) returns (JobResponse);
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
+  rpc UpdateJob(UpdateJobRequest) returns (JobResponse);
+}
+
+message CreateJobRequest {
+  int64 schedule_id = 1;
+  string scheduled_for = 2;
+}
+
+message Payload {
+  string command_name = 1;
+  string command_script = 2;
+  repeated string command_script_params = 3;
+}
+
+message JobResponse {
+  int64 id = 1;
+  int64 schedule_id = 2;
+  Payload payload = 3;
+  string status = 4;
+  string error = 5;
+  string result = 6;
+  string scheduled_for = 7;
+  string started_at = 8;
+  string finished_at = 9;
+  string created_at = 10;
+}
+
+message GetJobRequest {
+  int64 id = 1;
+}
+
+message ListJobsRequest {
+  optional int64 schedule_id = 1;
+  optional string status = 2;
+}
+
+message ListJobsResponse {
+  repeated JobResponse jobs = 1;
+}
+
+message UpdateJobRequest {
+  int64 job_id = 1;
+  optional string status = 2;
+  optional string error = 3;
+  optional string result = 4;
+  optional string started_at = 5;
+  optional string finished_at = 6;
+}
