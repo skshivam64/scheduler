@@ -3,7 +3,7 @@ Simple gRPC server and client code.
 Steps:
 
 1. Start the gRPC server and database.
-   docker compose up --build
+   docker compose up --build --detach
 
 2. Test the gRPC server using the ping service.
    grpcurl -plaintext -d '{"message": "Hello from gRPC!"}' localhost:50051 pingpong.PingPong/Ping
