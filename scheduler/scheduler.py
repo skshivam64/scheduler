@@ -71,27 +71,29 @@ def schedule_jobs():
             try:
                 queuedJobs = job_client.ListJobs(ListJobsRequest(
                     schedule_id=schedule.id, status="QUEUED")).jobs
-                last_timestamp = get_last_job_timestamp_for_schedule(
-                    schedule.id).decode("utf-8")
 
                 # If two jobs are already queued, skip
                 if len(queuedJobs) < MAX_QUEUE_SIZE:
-                    logging.info(f"Last timestamp: {last_timestamp}")
+                    last_timestamp = get_last_job_timestamp_for_schedule(
+                        schedule.id)
+                    if last_timestamp:
+                        last_timestamp = last_timestamp.decode("utf-8")
+                        last_timestamp = datetime.strptime(
+                            last_timestamp, "%Y-%m-%d %H:%M:%S")
                     next_runs = get_next_runs(
                         schedule.crontab,
-                        (MAX_QUEUE_SIZE - len(queuedJobs)),
-                        datetime.strptime(last_timestamp, "%Y-%m-%d %H:%M:%S"))
-                    logging.debug(f"Next runs: {next_runs}")
-
-                    for run in next_runs:
+                        (MAX_QUEUE_SIZE - len(queuedJobs)), last_timestamp)
+                    for next_expected_start_time in next_runs:
+                        next_expected_start_time = next_expected_start_time.strftime(
+                            '%Y-%m-%d %H:%M:%S')
                         job = job_client.CreateJob(CreateJobRequest(
-                            schedule_id=schedule.id, scheduled_for=run.strftime('%Y-%m-%d %H:%M:%S')))
+                            schedule_id=schedule.id, scheduled_for=next_expected_start_time))
                         process_job.apply_async(
-                            args=[job.id], eta=run.strftime('%Y-%m-%d %H:%M:%S'))
+                            args=[job.id], eta=next_expected_start_time)
                         set_last_job_timestamp_for_schedule(
-                            schedule.id, run.strftime('%Y-%m-%d %H:%M:%S'))
+                            schedule.id, next_expected_start_time)
                         logging.info(
-                            f"Scheduled job {job.id} for {run.strftime('%Y-%m-%d %H:%M:%S')}")
+                            f"Scheduled job {job.id} for {next_expected_start_time}")
 
             except Exception as e:
                 logging.error(f"An error occurred: {e}")
