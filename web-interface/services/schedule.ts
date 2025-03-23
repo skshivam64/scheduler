@@ -18,7 +18,7 @@ const ScheduleService = {
             );
 
             const scheduleId = result.rows[0].id;
-            if (params.length > 0) {
+            if (params && params.length > 0) {
                 const values = params
                     .map((param: string) => `(${scheduleId}, '${param}')`)
                     .join(", ");
