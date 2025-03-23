@@ -2,7 +2,6 @@ import grpc
 import os
 import redis
 import subprocess
-import threading
 import time
 import logging
 from celery import Celery
@@ -18,7 +17,12 @@ MAX_QUEUE_SIZE = 2
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    handlers=[
+                        logging.FileHandler(
+                            "logs/scheduler.log"),
+                        logging.StreamHandler()
+                    ],)
 
 # Celery configuration
 app = Celery("scheduler", broker=os.getenv(
@@ -29,7 +33,9 @@ redis_client = redis.Redis.from_url(
 
 def get_grpc_client(service):
     channel = grpc.insecure_channel(
-        "localhost:50051")  # Adjust as per deployment
+        os.getenv(
+            "CTRL_PLANE_SERVER",
+            "ctrl-plane:50051"))
     return service(channel)
 
 

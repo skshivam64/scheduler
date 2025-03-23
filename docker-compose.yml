@@ -65,7 +65,7 @@ services:
             - broker
         networks:
             - app_network
-        command: "celery -A scheduler worker --loglevel=info 2>&1 | tee logs/worker.log"
+        command: "celery -A scheduler worker --loglevel=info --loglevel=info --logfile=logs/worker.log"
         deploy:
             replicas: 5
 
