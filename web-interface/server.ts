@@ -7,20 +7,26 @@ import { addReflection } from "grpc-server-reflection";
 import PingpongService from "./services/pingpong";
 import CommandService from "./services/command";
 import ScheduleService from "./services/schedule";
+import JobService from "./services/job";
 
 dotenv.config();
 
 const PINGPONG_PROTO_PATH = path.join(__dirname, "proto/pingpong.proto");
 const COMMAND_PROTO_PATH = path.join(__dirname, "proto/command.proto");
 const SCHEDULE_PROTO_PATH = path.join(__dirname, "proto/schedule.proto");
+const JOB_PROTO_PATH = path.join(__dirname, "proto/job.proto");
 
 const pingpongPkgDef = protoLoader.loadSync(PINGPONG_PROTO_PATH);
 const commandPkgDef = protoLoader.loadSync(COMMAND_PROTO_PATH);
 const schedulePkgDef = protoLoader.loadSync(SCHEDULE_PROTO_PATH);
+const jobPkgDef = protoLoader.loadSync(JOB_PROTO_PATH);
 
 const pingpongProto: any = grpc.loadPackageDefinition(pingpongPkgDef).pingpong;
 const commandProto: any = grpc.loadPackageDefinition(commandPkgDef).command;
 const scheduleProto: any = grpc.loadPackageDefinition(schedulePkgDef).schedule;
+const jobProto: any = grpc.loadPackageDefinition(jobPkgDef).job;
+
+console.log(jobProto);
 
 const server = new grpc.Server();
 
@@ -30,6 +36,7 @@ addReflection(server, "./descriptor_set.bin");
 server.addService(pingpongProto.PingPong.service, PingpongService);
 server.addService(commandProto.Command.service, CommandService);
 server.addService(scheduleProto.Schedule.service, ScheduleService);
+server.addService(jobProto.Job.service, JobService);
 
 // Start the gRPC server
 server.bindAsync(

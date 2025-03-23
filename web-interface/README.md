@@ -58,6 +58,24 @@ Other util commands:
 10. Delete a schedule.
     grpcurl -plaintext -d '{"id": 1}' localhost:50051 schedule.Schedule/DeleteSchedule
 
+11. Create a job.
+    grpcurl -plaintext -d '{ "schedule_id": 1, "scheduled_for": "2025-03-23T11:00:00Z"}' localhost:50051 job.Job/CreateJob
+
+12. Get a job.
+    grpcurl -plaintext -d '{ "id": 101 }' localhost:50051 job.Job/GetJob
+
+13. List all jobs.
+    grpcurl -plaintext localhost:50051 job.Job/ListJobs
+
+14. List job by schedule id.
+    grpcurl -plaintext -d '{ "schedule_id": 1 }' localhost:50051 job.Job/ListJobs
+
+15. Get only queued jobs for a given schedule.
+    grpcurl -plaintext -d '{ "schedule_id": 3, "status": "QUEUED" }' localhost:50051 job.Job/ListJobs
+
+16. Update job.
+    grpcurl -plaintext -d '{ "job_id": 101, "status": "RUNNING", "started_at": "2025-03-23T11:00:00Z" }' localhost:50051 job.Job/UpdateJob
+
 TODOs:
 
 1. Data validation for each service.
@@ -74,5 +92,5 @@ run the old command. Any new job will be scheduled with the
 updated command.
 
 ii) If the command is deleted, jobs that are already scheduled
-to start or are running alreadt, won't be affected but any new
+to start or are already running, won't be affected but any new
 job will not be scheduled with the command.
