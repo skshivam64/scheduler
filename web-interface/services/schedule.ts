@@ -52,20 +52,21 @@ const ScheduleService = {
         }
 
         try {
-            await pool.query("BEGIN");
-            await pool.query("DELETE FROM params WHERE schedule_id = $1", [id]);
-            await pool.query("DELETE FROM schedules WHERE id = $1", [id]);
-            await pool.query("COMMIT");
+            await pool.query(
+                "UPDATE schedules SET is_deleted = true WHERE id = $1",
+                [id]
+            );
             callback(null, new Empty());
         } catch (err) {
-            await pool.query("ROLLBACK");
             callback(err);
         }
     },
 
     ListSchedules: async (call: any, callback: any) => {
         try {
-            const schedulesResult = await pool.query("SELECT * FROM schedules");
+            const schedulesResult = await pool.query(
+                "SELECT * FROM schedules WHERE is_deleted = false"
+            );
             const schedules = await Promise.all(
                 schedulesResult.rows.map(async (schedule: any) => {
                     const paramsResult = await pool.query(

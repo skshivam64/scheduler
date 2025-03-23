@@ -24,7 +24,7 @@ const CommandService = {
         const { name } = call.request;
         try {
             const result = await pool.query(
-                "SELECT name, script FROM commands WHERE name = $1",
+                "SELECT name, script FROM commands WHERE name = $1 AND is_deleted = false",
                 [name]
             );
             if (result.rows.length > 0) {
@@ -44,7 +44,7 @@ const CommandService = {
         const { name, script } = call.request;
         try {
             await pool.query(
-                "UPDATE commands SET script = $1 WHERE name = $2",
+                "UPDATE commands SET script = $1 WHERE name = $2 AND is_deleted = false",
                 [script, name]
             );
             callback(null, new Empty());
@@ -56,7 +56,10 @@ const CommandService = {
     DeleteCommand: async (call: any, callback: any) => {
         const { name } = call.request;
         try {
-            await pool.query("DELETE FROM commands WHERE name = $1", [name]);
+            await pool.query(
+                "UPDATE commands SET is_deleted = true WHERE name = $1",
+                [name]
+            );
             callback(null, new Empty());
         } catch (err) {
             callback(err);
@@ -66,7 +69,7 @@ const CommandService = {
     ListCommands: async (call: any, callback: any) => {
         try {
             const result = await pool.query(
-                "SELECT name, script FROM commands"
+                "SELECT name, script FROM commands WHERE is_deleted = false"
             );
             callback(null, { commands: result.rows });
         } catch (err) {
