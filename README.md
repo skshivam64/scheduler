@@ -99,6 +99,7 @@
 2. Pagination for the list APIs.
 3. Unit tests.
 4. API Gateway using Envoy or any other proxy to expose REST APIs.
+5. Design a mechanism to report bottlenecks.
 
 <h2>Important Notes</h2>
 Although, the service supports updating and removing command
@@ -120,5 +121,44 @@ If a schedule (or crontab) is deleted, jobs that are already
 scheduled to start or are already running, won't be affected
 but any new job will not be scheduled for that schedule (or
 crontab).
+        </li>
+        <li>
+If there are too many crontabs, scheduler may be a bottleneck.
+For example, let's say there's a crontab that says "run a given
+command every 1 min". Let's say the scheduler first schedules two
+jobs for 12:00 AM and 12:01 AM. But, let's say the scheduler next
+processes this crontab after 5 mins beacuse it was busy processing
+other crontabs. In that case, scheduler will, by design, schedule
+the jobs for 12:02 AM and 12:03 AM (less than current time). This
+ensures that no instance is missed. This represents a case of
+scheduler bottleneck. This bottleneck, however, can be easily
+tracked by listing jobs ordered by schedule. If one or many
+schedules have less than two queued jobs for a long time, it means
+scheduler is too busy. In such a case, increase the number of
+replicas for scheduler in docker compose. Note that multiple
+schedulers can run in parallel because the critical sections are
+locked by distributed locks.
+        </li>
+        <li>
+If the scheduler is not the bottleneck, it can be checked
+whether the number of worker threads is a bottleneck by looking at
+the RUNNING jobs. If one or many jobs have a significant
+difference between the time when the job started (started_at) and
+the time it was scheduled to start at (scheduled_for), it means that
+the number of worker threads is a bottleneck. Increase the number of
+replicas for worker in this case.
+        </li>
+        <li>
+With similar methods as mentioned above, it can also be figured
+out if there are too many replicas for the scheduler or worker.
+If there are, the number of replicas for corresponding component
+can be reduced.
+        </li>
+        <li>
+A better mechanism can be developed to detect bottlenecks where
+each scheduler thread and each worker thread can report the states
+"too busy" or "too free" via a message broker to another service that
+can start a new scheduler/worker thread or gracefully terminate one
+depending on the load.
         </li>
 </ul>
